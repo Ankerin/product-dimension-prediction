@@ -1,0 +1,34 @@
+# Data
+*.parquet
+*.zip
+train/
+test/
+
+# Artifacts (large model files)
+artifacts/
+*.cbm
+*.npz
+*.npy
+*.pkl
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.cache/
+.runtime/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# CatBoost info
+catboost_info/
+
+# Logs
+*.log
+*.err

@@ -22,18 +22,22 @@ def main():
 
     train = pd.read_parquet(ROOT / 'train.parquet', columns=['image_name'])
     test = pd.read_parquet(ROOT / 'test.parquet', columns=['image_name'])
+
     names = [
         (ROOT / 'train.zip', name) for name in train.image_name
     ] + [
         (ROOT / 'test.zip', 'test/' + name) for name in test.image_name
     ]
+
     out = np.lib.format.open_memmap(
         ART / 'image_resnet50.npy', mode='w+', dtype='float32',
-        shape=(len(names), 2048)
+        shape=(len(names), 2048),
     )
+
     handles = {}
     batch_size = 128
     start = time.time()
+
     with torch.inference_mode():
         for begin in range(0, len(names), batch_size):
             batch = []
@@ -45,10 +49,16 @@ def main():
             x = torch.stack(batch).to(device)
             out[begin:begin + len(batch)] = model(x).float().cpu().numpy()
             if begin % (batch_size * 40) == 0:
-                print('IMAGE', begin, '/', len(names), 'seconds', round(time.time() - start), flush=True)
+                print(
+                    'IMAGE', begin, '/', len(names),
+                    'seconds', round(time.time() - start),
+                    flush=True,
+                )
+
     out.flush()
     for handle in handles.values():
         handle.close()
+
     print('DONE', out.shape, 'seconds', round(time.time() - start), flush=True)
 
 

@@ -18,13 +18,21 @@ def main():
     model = vit_b_16(weights=weights).to(device).eval()
     model.heads = torch.nn.Identity()
     transform = weights.transforms()
+
     train = pd.read_parquet(ROOT / 'train.parquet', columns=['image_name'])
     test = pd.read_parquet(ROOT / 'test.parquet', columns=['image_name'])
+
     names = [(ROOT / 'train.zip', n) for n in train.image_name]
     names += [(ROOT / 'test.zip', 'test/' + n) for n in test.image_name]
-    out = np.lib.format.open_memmap(ART / 'image_vit_b16.npy', mode='w+', dtype='float32', shape=(len(names), 768))
+
+    out = np.lib.format.open_memmap(
+        ART / 'image_vit_b16.npy', mode='w+', dtype='float32',
+        shape=(len(names), 768),
+    )
+
     handles = {}
     start = time.time()
+
     with torch.inference_mode():
         for begin in range(0, len(names), 64):
             batch = []
@@ -33,12 +41,20 @@ def main():
                     handles[archive] = zipfile.ZipFile(archive)
                 with handles[archive].open(name) as stream:
                     batch.append(transform(Image.open(stream).convert('RGB')))
-            out[begin:begin + len(batch)] = model(torch.stack(batch).to(device)).float().cpu().numpy()
+            out[begin:begin + len(batch)] = model(
+                torch.stack(batch).to(device)
+            ).float().cpu().numpy()
             if begin % (64 * 80) == 0:
-                print('VIT', begin, '/', len(names), 'seconds', round(time.time() - start), flush=True)
+                print(
+                    'VIT', begin, '/', len(names),
+                    'seconds', round(time.time() - start),
+                    flush=True,
+                )
+
     out.flush()
     for handle in handles.values():
         handle.close()
+
     print('DONE', out.shape, 'seconds', round(time.time() - start), flush=True)
 
 
